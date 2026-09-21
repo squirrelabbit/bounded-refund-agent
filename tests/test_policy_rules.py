@@ -109,6 +109,45 @@ def test_a_refund_larger_than_the_captured_amount_is_denied():
     assert result.reason_code is ReasonCode.AMOUNT_EXCEEDS_CAPTURED
 
 
+def test_over_captured_and_over_the_auto_limit_is_denied_not_escalated():
+    """Decision-table precedence (DESIGN.md §3): the captured row sits above the limit row.
+
+    40,000 is both more than the 5,000 captured and more than the 25,000
+    automatic limit, so both rows match. First match wins, and the first match
+    is ``amount_exceeds_captured``: an impossible request is refused outright
+    rather than queued for a human. Swapping the two blocks in
+    ``_evaluate_refund`` turns this into ESCALATE and breaks this test.
+    """
+    world = world_with(total_cents=5_000, captured_cents=5_000)
+    result = _decide(world, _refund(40_000))
+    assert result.decision is Decision.DENY
+    assert result.reason_code is ReasonCode.AMOUNT_EXCEEDS_CAPTURED
+
+
+def test_over_captured_and_over_the_auto_limit_writes_nothing():
+    """The same precedence, through the runner: DENY writes no ticket at all."""
+    report = run_scenario(
+        {
+            "scenario_id": "deny_over_captured_and_over_limit",
+            "world": world_with(total_cents=5_000, captured_cents=5_000),
+            "order_id": "ord_0001",
+            "proposals": [
+                {
+                    "action": "issue_refund",
+                    "order_id": "ord_0001",
+                    "amount_cents": 40_000,
+                    "reason": "refund more than was ever captured",
+                }
+            ],
+        }
+    )
+    assert report.outcome is Outcome.DENIED
+    assert report.reason_code is ReasonCode.AMOUNT_EXCEEDS_CAPTURED
+    assert report.mutation_count == 0
+    assert report.support_ticket_created is False
+    assert report.refund_created is False
+
+
 def test_a_refund_outside_the_return_window_is_escalated():
     world = world_with(order_status="DELIVERED", delivered_at=DELIVERED_LONG_AGO)
     result = _decide(world, _refund(5_000))

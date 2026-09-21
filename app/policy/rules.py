@@ -138,15 +138,15 @@ def _evaluate_refund(proposal: ActionProposal, snapshot: PolicySnapshot) -> Poli
     if amount is None or amount <= 0:
         return _deny(ReasonCode.INVALID_PROPOSAL, "refund needs a positive amount_cents")
 
+    if amount > payment.captured_cents:
+        return _deny(
+            ReasonCode.AMOUNT_EXCEEDS_CAPTURED, f"{amount} > {payment.captured_cents}"
+        )
+
     limit = refund_policy.auto_refund_limit_cents or AUTO_REFUND_LIMIT_CENTS
     if amount > limit:
         return _escalate(
             ReasonCode.ABOVE_AUTO_REFUND_LIMIT, snapshot, f"{amount} > {limit}"
-        )
-
-    if amount > payment.captured_cents:
-        return _deny(
-            ReasonCode.AMOUNT_EXCEEDS_CAPTURED, f"{amount} > {payment.captured_cents}"
         )
 
     window_days = refund_policy.post_delivery_window_days
