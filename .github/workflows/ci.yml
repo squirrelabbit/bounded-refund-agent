@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Unit and failure-mode tests
+        run: python -m pytest -q
+
+      # The evaluation is offline by construction: a scripted planner, seeded
+      # SQLite, no model call and no API key. Its exit code is the release
+      # verdict, and it is deliberately not softened with continue-on-error:
+      # a missed release criterion has to turn this job red.
+      - name: Evaluation (24 scenarios, offline)
+        run: python -m evals.run_eval
+
+      - name: Upload evaluation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: evals/results/
