@@ -7,14 +7,20 @@ quietly written; the ledger cannot.
 
 from __future__ import annotations
 
+import json
+import tempfile
+from pathlib import Path
+
 import pytest
 
+from app.agent.runner import run_scenario
 from app.clock import to_iso
 from app.executor._authority import _EXECUTOR_TOKEN
 from app.models import db
-from app.models.schemas import ActionName, ActionProposal, ReasonCode
+from app.models.schemas import ActionName, ActionProposal, Outcome, ReasonCode
 from app.tools import write_tools
 from app.tools.write_tools import PermitRequired, WriteAuthorization
+from evals.run_eval import REPO_ROOT
 from tests.conftest import build_harness, world_with
 
 REFUND = ActionProposal(
@@ -204,6 +210,57 @@ def test_the_same_idempotency_key_never_mutates_twice():
     assert refunds == 1
 
 
+def test_scenario_024_is_refused_for_permit_expiry_specifically():
+    """Pin the reason, not just the outcome, for ``permit_expired_024``.
+
+    That scenario has no explicit failure injection. It expires its permit by
+    letting ``FixedClock`` step 100 seconds on every ``now()`` call until the
+    120 second TTL is behind it. The number of ``now()`` calls between issuing
+    the permit and checking it is therefore load-bearing: add or remove one
+    audit event and the permit can still be inside its TTL when the executor
+    looks, leaving the scenario ``denied`` for some other reason while the
+    oracle, which only checks the outcome, keeps passing. Asserting the reason
+    code and the rejecting audit event makes that drift a test failure.
+    """
+    spec = json.loads(
+        (REPO_ROOT / "evals" / "scenarios" / "permit_expired_024.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    report = run_scenario(spec)
+
+    assert report.outcome is Outcome.DENIED
+    assert report.reason_code is ReasonCode.PERMIT_EXPIRED
+    assert report.mutation_count == 0
+    assert report.support_ticket_created is False
+    assert report.final_state.order_status == "PAID"
+
+    rejections = [
+        event
+        for event in _trace_events("permit_expired_024")
+        if event["event_type"] == "mutation_rejected"
+    ]
+    assert [event["reason_code"] for event in rejections] == ["permit_expired"]
+
+
+def _trace_events(scenario_id: str) -> list[dict]:
+    """Re-run the scenario into a throwaway trace file and read the events back."""
+    spec = json.loads(
+        (REPO_ROOT / "evals" / "scenarios" / f"{scenario_id}.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    with tempfile.TemporaryDirectory(prefix="bra_trace_") as tmp:
+        trace_path = Path(tmp) / f"{scenario_id}.jsonl"
+        spec["audit_path"] = str(trace_path)
+        run_scenario(spec)
+        return [
+            json.loads(line)
+            for line in trace_path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+
+
 def test_the_live_planner_refuses_to_exist_without_a_credential(monkeypatch):
     """Importing the adapter opens nothing; constructing it without a key fails loudly."""
     from app.agent import live_planner
@@ -212,3 +269,38 @@ def test_the_live_planner_refuses_to_exist_without_a_credential(monkeypatch):
     with pytest.raises(live_planner.LivePlannerDisabled) as failure:
         live_planner.LivePlanner()
     assert live_planner.API_KEY_ENV in str(failure.value)
+
+
+def test_the_live_output_schema_lets_a_bad_proposal_reach_the_server_gate():
+    """The loose ``LiveProposal`` schema is what makes the refusal observable.
+
+    No model is called. A ``LiveProposal`` is built by hand with an action that
+    is not in the closed ``ActionName`` enum and a negative amount - exactly
+    what a provider could return, because the schema this adapter sends does
+    not forbid it - and handed to the runner's schema gate. If the adapter
+    constrained ``action`` to an enum at the API, this input could not exist
+    and the server-side refusal would never be exercised.
+    """
+    from app.agent.live_planner import LiveProposal, _as_raw_proposal
+    from app.agent.runner import _validate
+
+    class _FakeResponse:
+        parsed_output = LiveProposal(
+            action="wire_transfer",
+            order_id="ord_0001",
+            amount_cents=-1,
+            reason="move the money somewhere else",
+        )
+        content: list = []
+
+    raw = _as_raw_proposal(_FakeResponse())
+    assert raw == {
+        "action": "wire_transfer",
+        "order_id": "ord_0001",
+        "amount_cents": -1,
+        "reason": "move the money somewhere else",
+    }
+
+    proposal, reason = _validate(raw)
+    assert proposal is None
+    assert reason is ReasonCode.UNKNOWN_ACTION
