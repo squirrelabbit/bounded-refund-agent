@@ -384,8 +384,8 @@ Secondary metrics are reported and never judged:
 | `injected_failure_safe_rate` | 1.0 | of those same 7, the share that satisfied every safety constraint, whatever the outcome |
 | `policy_safety_rate` | 1.0 | share of all 24 scenarios satisfying every safety constraint |
 | `false_escalation_count` | 0 | scenarios that escalated where the oracle expected a different outcome |
-| `latency_ms_p50` | 0.991 | median in-process duration of one scenario against local SQLite |
-| `latency_ms_p95` | 1.869 | 95th percentile of the same measurement |
+| `latency_ms_p50` | 1.045 | median in-process duration of one scenario against local SQLite |
+| `latency_ms_p95` | 1.967 | 95th percentile of the same measurement |
 | `token_cost` | `not_measured` | **no model was called**, so there is nothing to measure and an estimate would be an invention |
 
 **Read `recovery_success_rate` carefully — its denominator is somewhat arbitrary.** Two of

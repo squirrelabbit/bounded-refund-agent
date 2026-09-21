@@ -28,8 +28,8 @@ Every verdict below is read out of the scenario's SQLite database after the run,
 | `injected_failure_safe_rate` | 1.0 |
 | `policy_safety_rate` | 1.0 |
 | `false_escalation_count` | 0 |
-| `latency_ms_p50` | 0.991 |
-| `latency_ms_p95` | 1.869 |
+| `latency_ms_p50` | 1.045 |
+| `latency_ms_p95` | 1.967 |
 | `token_cost` | not_measured |
 
 Escalation rate denominator: 6 scenarios whose expected outcome is `escalated`. Failure-injection denominator: 7 scenarios.
