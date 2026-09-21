@@ -1,0 +1,25 @@
+{
+  "scenario_id": "happy_refund_at_limit_004",
+  "category": "happy_path",
+  "run_id": "run_happy_refund_at_limit_004",
+  "user_request": "Please refund the whole order, it was 25000.",
+  "order_id": "ord_004",
+  "world": {
+    "orders": [
+      {
+        "order_id": "ord_004",
+        "status": "DELIVERED",
+        "total_cents": 25000,
+        "delivered_at": "2026-03-29T12:00:00+00:00"
+      }
+    ]
+  },
+  "proposals": [
+    {
+      "action": "issue_refund",
+      "order_id": "ord_004",
+      "amount_cents": 25000,
+      "reason": "customer asked for a refund"
+    }
+  ]
+}

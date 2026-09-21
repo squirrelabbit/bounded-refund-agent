@@ -1,0 +1,25 @@
+{
+  "scenario_id": "happy_refund_last_day_of_window_008",
+  "category": "happy_path",
+  "run_id": "run_happy_refund_last_day_of_window_008",
+  "user_request": "It is the last day of the return window, refund 8000.",
+  "order_id": "ord_008",
+  "world": {
+    "orders": [
+      {
+        "order_id": "ord_008",
+        "status": "DELIVERED",
+        "total_cents": 8000,
+        "delivered_at": "2026-03-18T12:00:00+00:00"
+      }
+    ]
+  },
+  "proposals": [
+    {
+      "action": "issue_refund",
+      "order_id": "ord_008",
+      "amount_cents": 8000,
+      "reason": "customer asked for a refund"
+    }
+  ]
+}

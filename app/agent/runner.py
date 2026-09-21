@@ -63,6 +63,8 @@ class Runner:
         audit: AuditTrace | None = None,
         allow_replan_on_stale: bool = False,
         default_order_id: str = "",
+        chain_proposals: bool = False,
+        replay_last_permit: bool = False,
     ) -> None:
         self.conn = conn
         self.clock = clock
@@ -74,6 +76,9 @@ class Runner:
         self.audit = audit or AuditTrace(run_id, scenario_id, clock)
         self.allow_replan_on_stale = allow_replan_on_stale
         self.default_order_id = default_order_id
+        self.chain_proposals = chain_proposals
+        self.replay_last_permit = replay_last_permit
+        self.last_execution: tuple[str, ActionProposal] | None = None
         self.recorder = ToolCallRecorder()
         self.read_tools = ReadTools(conn, self.recorder, injector)
         self.issuer = PermitIssuer(conn, clock, run_id)
@@ -119,6 +124,19 @@ class Runner:
 
         if escalate_reason is not None:
             self._escalate(escalate_order_id, escalate_reason, "stale state after replan")
+
+        while (
+            self.chain_proposals
+            and outcome is Outcome.COMPLETED
+            and not getattr(self.planner, "exhausted", True)
+        ):
+            follow_up, order_id = self._attempt(1, order_id)
+            if follow_up.replan or follow_up.escalate_after_replan:
+                break
+            outcome, reason_code = follow_up.outcome, follow_up.reason_code
+
+        if self.replay_last_permit and self.last_execution is not None:
+            self._replay_last_permit()
 
         final_state = self._verify(order_id)
         report = self._report(outcome, reason_code, final_state, started)
@@ -213,6 +231,7 @@ class Runner:
             permit_id=permit.permit_id,
         )
 
+        self.last_execution = (permit.permit_id, proposal)
         try:
             result = self.executor.execute(permit.permit_id, proposal)
         except ResponseTimeout as timeout:
@@ -238,6 +257,21 @@ class Runner:
 
         return _Attempt(
             Outcome.DENIED, result.reason_code or ReasonCode.INVALID_PROPOSAL
+        )
+
+    def _replay_last_permit(self) -> None:
+        """Present a spent permit again on purpose (DESIGN.md §3a).
+
+        The expected answer is the stored result of the first execution, so the
+        mutation count must not move. Only a scenario that asks for this gets it.
+        """
+        assert self.last_execution is not None
+        permit_id, proposal = self.last_execution
+        result = self.executor.execute(permit_id, proposal)
+        self.notes.append(
+            f"deliberate replay of {permit_id}:"
+            f" committed={result.committed} replayed={result.replayed}"
+            f" reason={result.reason_code or 'none'}"
         )
 
     def _escalate(self, order_id: str, reason: ReasonCode, detail: str) -> ExecutionResult | None:
@@ -432,6 +466,8 @@ def build_runner(
         audit=audit,
         allow_replan_on_stale=bool(spec.get("allow_replan_on_stale", False)),
         default_order_id=str(spec.get("order_id", "")),
+        chain_proposals=bool(spec.get("chain_proposals", False)),
+        replay_last_permit=bool(spec.get("replay_last_permit", False)),
     )
     return runner, conn, injector
 

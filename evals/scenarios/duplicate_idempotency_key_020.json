@@ -1,0 +1,26 @@
+{
+  "scenario_id": "duplicate_idempotency_key_020",
+  "category": "failure_injection",
+  "run_id": "run_duplicate_idempotency_key_020",
+  "user_request": "Refund 7000 of this order.",
+  "order_id": "ord_020",
+  "world": {
+    "orders": [
+      {
+        "order_id": "ord_020",
+        "status": "DELIVERED",
+        "total_cents": 20000,
+        "delivered_at": "2026-03-26T12:00:00+00:00"
+      }
+    ]
+  },
+  "proposals": [
+    {
+      "action": "issue_refund",
+      "order_id": "ord_020",
+      "amount_cents": 7000,
+      "reason": "customer asked for a refund"
+    }
+  ],
+  "replay_last_permit": true
+}

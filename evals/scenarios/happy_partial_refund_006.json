@@ -1,0 +1,25 @@
+{
+  "scenario_id": "happy_partial_refund_006",
+  "category": "happy_path",
+  "run_id": "run_happy_partial_refund_006",
+  "user_request": "Two of the six items were missing, refund 9000 please.",
+  "order_id": "ord_006",
+  "world": {
+    "orders": [
+      {
+        "order_id": "ord_006",
+        "status": "DELIVERED",
+        "total_cents": 30000,
+        "delivered_at": "2026-03-25T12:00:00+00:00"
+      }
+    ]
+  },
+  "proposals": [
+    {
+      "action": "issue_refund",
+      "order_id": "ord_006",
+      "amount_cents": 9000,
+      "reason": "customer asked for a refund"
+    }
+  ]
+}

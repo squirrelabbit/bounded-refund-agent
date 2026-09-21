@@ -53,7 +53,12 @@ def default_policy_spec() -> dict[str, Any]:
 
 
 def seed_world(conn: sqlite3.Connection, spec: dict[str, Any] | None = None) -> SeededWorld:
-    """Insert the declared fixtures. Omitted fields get deterministic defaults."""
+    """Insert the declared fixtures. Omitted fields get deterministic defaults.
+
+    An order normally gets a matching shipment row generated for it. An order
+    spec may set ``"without_shipment": true`` to suppress that, which is the
+    only way to build the world where a required record simply does not exist.
+    """
     spec = dict(spec or {})
     rng = random.Random(int(spec.get("seed", DEFAULT_SEED)))
 
@@ -117,7 +122,9 @@ def seed_world(conn: sqlite3.Connection, spec: dict[str, Any] | None = None) -> 
                         "captured_cents": int(order.get("total_cents", 10_000)),
                     }
                 )
-            if order_id not in explicit_shipment_orders:
+            if order_id not in explicit_shipment_orders and not order.get(
+                "without_shipment", False
+            ):
                 shipment_specs.append(
                     {
                         "order_id": order_id,

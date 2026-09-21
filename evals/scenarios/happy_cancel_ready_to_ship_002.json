@@ -1,0 +1,23 @@
+{
+  "scenario_id": "happy_cancel_ready_to_ship_002",
+  "category": "happy_path",
+  "run_id": "run_happy_cancel_ready_to_ship_002",
+  "user_request": "Cancel it before it goes out, please.",
+  "order_id": "ord_002",
+  "world": {
+    "orders": [
+      {
+        "order_id": "ord_002",
+        "status": "READY_TO_SHIP",
+        "total_cents": 22000
+      }
+    ]
+  },
+  "proposals": [
+    {
+      "action": "cancel_order",
+      "order_id": "ord_002",
+      "reason": "customer asked to cancel"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "scenario_id": "read_timeout_recovered_021",
+  "category": "failure_injection",
+  "run_id": "run_read_timeout_recovered_021",
+  "user_request": "Refund 6000 of this order.",
+  "order_id": "ord_021",
+  "world": {
+    "orders": [
+      {
+        "order_id": "ord_021",
+        "status": "DELIVERED",
+        "total_cents": 12000,
+        "delivered_at": "2026-03-27T12:00:00+00:00"
+      }
+    ]
+  },
+  "proposals": [
+    {
+      "action": "issue_refund",
+      "order_id": "ord_021",
+      "amount_cents": 6000,
+      "reason": "customer asked for a refund"
+    }
+  ],
+  "failures": {
+    "read_timeouts": {
+      "get_payment": 1
+    }
+  }
+}

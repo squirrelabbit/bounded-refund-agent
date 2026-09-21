@@ -1,0 +1,30 @@
+{
+  "scenario_id": "timeout_after_commit_retry_019",
+  "category": "failure_injection",
+  "run_id": "run_timeout_after_commit_retry_019",
+  "user_request": "Refund 9000 of this order.",
+  "order_id": "ord_019",
+  "world": {
+    "orders": [
+      {
+        "order_id": "ord_019",
+        "status": "DELIVERED",
+        "total_cents": 30000,
+        "delivered_at": "2026-03-26T12:00:00+00:00"
+      }
+    ]
+  },
+  "proposals": [
+    {
+      "action": "issue_refund",
+      "order_id": "ord_019",
+      "amount_cents": 9000,
+      "reason": "customer asked for a refund"
+    }
+  ],
+  "failures": {
+    "post_commit_timeout_actions": {
+      "issue_refund": 1
+    }
+  }
+}

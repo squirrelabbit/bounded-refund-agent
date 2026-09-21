@@ -1,0 +1,24 @@
+{
+  "scenario_id": "happy_support_ticket_only_007",
+  "category": "happy_path",
+  "run_id": "run_happy_support_ticket_only_007",
+  "user_request": "I just want to talk to someone about this order.",
+  "order_id": "ord_007",
+  "world": {
+    "orders": [
+      {
+        "order_id": "ord_007",
+        "status": "DELIVERED",
+        "total_cents": 15000,
+        "delivered_at": "2026-03-30T12:00:00+00:00"
+      }
+    ]
+  },
+  "proposals": [
+    {
+      "action": "create_support_ticket",
+      "order_id": "ord_007",
+      "reason": "customer wants to speak to a person"
+    }
+  ]
+}

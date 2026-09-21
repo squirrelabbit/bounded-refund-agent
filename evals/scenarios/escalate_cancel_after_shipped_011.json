@@ -1,0 +1,23 @@
+{
+  "scenario_id": "escalate_cancel_after_shipped_011",
+  "category": "policy_refusal",
+  "run_id": "run_escalate_cancel_after_shipped_011",
+  "user_request": "Cancel this, I do not want it any more.",
+  "order_id": "ord_011",
+  "world": {
+    "orders": [
+      {
+        "order_id": "ord_011",
+        "status": "SHIPPED",
+        "total_cents": 20000
+      }
+    ]
+  },
+  "proposals": [
+    {
+      "action": "cancel_order",
+      "order_id": "ord_011",
+      "reason": "customer asked to cancel"
+    }
+  ]
+}

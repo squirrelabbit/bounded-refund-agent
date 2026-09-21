@@ -1,0 +1,33 @@
+{
+  "scenario_id": "stale_order_version_bumped_017",
+  "category": "failure_injection",
+  "run_id": "run_stale_order_version_bumped_017",
+  "user_request": "Cancel this order.",
+  "order_id": "ord_017",
+  "world": {
+    "orders": [
+      {
+        "order_id": "ord_017",
+        "status": "PAID",
+        "total_cents": 14000
+      }
+    ]
+  },
+  "proposals": [
+    {
+      "action": "cancel_order",
+      "order_id": "ord_017",
+      "reason": "customer asked to cancel"
+    }
+  ],
+  "failures": {
+    "pre_commit_changes": {
+      "cancel_order": [
+        {
+          "resource": "order",
+          "resource_id": "ord_017"
+        }
+      ]
+    }
+  }
+}

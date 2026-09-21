@@ -1,0 +1,23 @@
+{
+  "scenario_id": "happy_cancel_paid_001",
+  "category": "happy_path",
+  "run_id": "run_happy_cancel_paid_001",
+  "user_request": "I changed my mind, please cancel this order.",
+  "order_id": "ord_001",
+  "world": {
+    "orders": [
+      {
+        "order_id": "ord_001",
+        "status": "PAID",
+        "total_cents": 12000
+      }
+    ]
+  },
+  "proposals": [
+    {
+      "action": "cancel_order",
+      "order_id": "ord_001",
+      "reason": "customer asked to cancel"
+    }
+  ]
+}

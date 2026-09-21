@@ -1,0 +1,30 @@
+{
+  "scenario_id": "happy_cancel_then_refund_005",
+  "category": "happy_path",
+  "run_id": "run_happy_cancel_then_refund_005",
+  "user_request": "Cancel the order and give me my money back.",
+  "order_id": "ord_005",
+  "world": {
+    "orders": [
+      {
+        "order_id": "ord_005",
+        "status": "PAID",
+        "total_cents": 12000
+      }
+    ]
+  },
+  "proposals": [
+    {
+      "action": "cancel_order",
+      "order_id": "ord_005",
+      "reason": "customer asked to cancel"
+    },
+    {
+      "action": "issue_refund",
+      "order_id": "ord_005",
+      "amount_cents": 12000,
+      "reason": "customer asked for a refund"
+    }
+  ],
+  "chain_proposals": true
+}

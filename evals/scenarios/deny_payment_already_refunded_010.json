@@ -1,0 +1,33 @@
+{
+  "scenario_id": "deny_payment_already_refunded_010",
+  "category": "policy_refusal",
+  "run_id": "run_deny_payment_already_refunded_010",
+  "user_request": "Refund 5000 for this order.",
+  "order_id": "ord_010",
+  "world": {
+    "orders": [
+      {
+        "order_id": "ord_010",
+        "status": "DELIVERED",
+        "total_cents": 5000,
+        "delivered_at": "2026-03-29T12:00:00+00:00"
+      }
+    ],
+    "payments": [
+      {
+        "order_id": "ord_010",
+        "status": "REFUNDED",
+        "captured_cents": 5000,
+        "refunded_cents": 5000
+      }
+    ]
+  },
+  "proposals": [
+    {
+      "action": "issue_refund",
+      "order_id": "ord_010",
+      "amount_cents": 5000,
+      "reason": "customer asked for a refund"
+    }
+  ]
+}

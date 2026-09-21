@@ -1,0 +1,49 @@
+{
+  "scenario_id": "stale_then_replan_escalate_023",
+  "category": "failure_injection",
+  "run_id": "run_stale_then_replan_escalate_023",
+  "user_request": "Cancel this order before it ships.",
+  "order_id": "ord_023",
+  "world": {
+    "orders": [
+      {
+        "order_id": "ord_023",
+        "status": "READY_TO_SHIP",
+        "total_cents": 19000
+      }
+    ]
+  },
+  "proposals": [
+    {
+      "action": "cancel_order",
+      "order_id": "ord_023",
+      "reason": "customer asked to cancel"
+    },
+    {
+      "action": "cancel_order",
+      "order_id": "ord_023",
+      "reason": "second attempt after the stale refusal"
+    }
+  ],
+  "failures": {
+    "pre_commit_changes": {
+      "cancel_order": [
+        {
+          "resource": "order",
+          "resource_id": "ord_023",
+          "set_values": {
+            "status": "SHIPPED"
+          }
+        },
+        {
+          "resource": "shipment",
+          "resource_id": "shp_ord_023",
+          "set_values": {
+            "status": "SHIPPED"
+          }
+        }
+      ]
+    }
+  },
+  "allow_replan_on_stale": true
+}

@@ -1,0 +1,43 @@
+{
+  "scenario_id": "stale_shipment_shipped_018",
+  "category": "failure_injection",
+  "run_id": "run_stale_shipment_shipped_018",
+  "user_request": "Cancel this before it ships.",
+  "order_id": "ord_018",
+  "world": {
+    "orders": [
+      {
+        "order_id": "ord_018",
+        "status": "READY_TO_SHIP",
+        "total_cents": 16000
+      }
+    ]
+  },
+  "proposals": [
+    {
+      "action": "cancel_order",
+      "order_id": "ord_018",
+      "reason": "customer asked to cancel"
+    }
+  ],
+  "failures": {
+    "pre_commit_changes": {
+      "cancel_order": [
+        {
+          "resource": "order",
+          "resource_id": "ord_018",
+          "set_values": {
+            "status": "SHIPPED"
+          }
+        },
+        {
+          "resource": "shipment",
+          "resource_id": "shp_ord_018",
+          "set_values": {
+            "status": "SHIPPED"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "scenario_id": "permit_expired_024",
+  "category": "failure_injection",
+  "run_id": "run_permit_expired_024",
+  "user_request": "Cancel this order.",
+  "order_id": "ord_024",
+  "world": {
+    "orders": [
+      {
+        "order_id": "ord_024",
+        "status": "PAID",
+        "total_cents": 11000
+      }
+    ]
+  },
+  "proposals": [
+    {
+      "action": "cancel_order",
+      "order_id": "ord_024",
+      "reason": "customer asked to cancel"
+    }
+  ],
+  "clock": {
+    "base": "2026-04-01T12:00:00+00:00",
+    "step_seconds": 100
+  }
+}

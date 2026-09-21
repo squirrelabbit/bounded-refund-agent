@@ -1,0 +1,25 @@
+{
+  "scenario_id": "happy_refund_small_003",
+  "category": "happy_path",
+  "run_id": "run_happy_refund_small_003",
+  "user_request": "One item arrived damaged, I would like 4500 back.",
+  "order_id": "ord_003",
+  "world": {
+    "orders": [
+      {
+        "order_id": "ord_003",
+        "status": "DELIVERED",
+        "total_cents": 18000,
+        "delivered_at": "2026-03-27T12:00:00+00:00"
+      }
+    ]
+  },
+  "proposals": [
+    {
+      "action": "issue_refund",
+      "order_id": "ord_003",
+      "amount_cents": 4500,
+      "reason": "customer asked for a refund"
+    }
+  ]
+}
