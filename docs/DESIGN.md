@@ -56,15 +56,33 @@ Every decision is one of `ALLOW`, `DENY`, `ESCALATE`, each with a `reason_code`.
 | cancel, order already `SHIPPED`/`DELIVERED` | ESCALATE | `cancel_after_shipment` |
 | cancel, order already `CANCELLED` | DENY | `order_already_cancelled` |
 | refund, payment already `REFUNDED` | DENY | `payment_already_refunded` |
-| refund, amount > `AUTO_REFUND_LIMIT_CENTS` | ESCALATE | `above_auto_refund_limit` |
 | refund, amount > payment captured amount | DENY | `amount_exceeds_captured` |
+| refund, amount > `AUTO_REFUND_LIMIT_CENTS` | ESCALATE | `above_auto_refund_limit` |
 | refund, delivered more than `POST_DELIVERY_REFUND_WINDOW_DAYS` ago | ESCALATE | `outside_return_window` |
 | any action, a required record could not be read | ESCALATE | `insufficient_information` |
 | any action, resource version changed since it was read | DENY | `stale_resource_version` |
 | proposal fails schema validation or names an unknown action | DENY | `invalid_proposal` / `unknown_action` |
 
+Rows are evaluated top to bottom and the first match wins. `amount_exceeds_captured`
+deliberately sits above `above_auto_refund_limit`: a refund larger than what was captured is
+an impossible request, not a large one, so it is refused outright rather than put on a
+human's queue as though it might be payable. A refund that is within the captured amount
+but above the automatic limit still escalates.
+
 `DENY` performs no mutation at all. `ESCALATE` performs exactly one mutation: it creates a
 `SupportTicket`. This is the only case where a refusal writes anything.
+
+## 3a. Permit lifetime
+
+A permit is single-use. The executor marks it consumed in the same transaction as the
+mutation. If the same permit is presented again *after* a successful commit, the executor
+does not perform a second mutation and does not report a bare rejection either: it returns
+the stored result of the first execution (`idempotent_replay`). This is what makes the
+"committed, response lost" retry safe, and it is why `permit_already_used` is reserved for
+a permit that was consumed with no execution record behind it.
+
+Consequence to keep in mind when reading the oracle: deliberately replaying a spent permit
+is expected to leave the mutation count unchanged, not to raise `permit_already_used`.
 
 ## 4. Oracle schema
 
