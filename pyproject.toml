@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bounded-refund-agent"
+version = "0.1.0"
+description = "A policy-governed order support agent where an LLM proposes actions and deterministic server-side rules authorize, execute and verify irreversible mutations."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+dependencies = ["pydantic>=2.6"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+bra = "app.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app", "simulator", "evals"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
