@@ -11,7 +11,7 @@ agent cannot write to.**
 | 1. It works | `bra demo a` | 0:00-0:30 | `mutations committed (counted in mutation_log): 2` |
 | 2. It refuses | `bra demo b` | 0:30-1:00 | `policy_allowed ... owner=policy` — the refusal has an owner |
 | 3. The world moved | `bra demo c` | 1:00-1:30 | `mutation_rejected ... version=2` against a permit for version 1 |
-| 4. The response was lost | `bra demo d` | 1:30-2:00 | two `mutation_committed` events, `mutation_count: 1` |
+| 4. The response was lost | `bra demo d` | 1:30-2:00 | one `mutation_committed`, one `mutation_replayed`, `mutation_count: 1` |
 
 Setup before the clock starts:
 
@@ -139,17 +139,18 @@ Point at:
    ```
 
    That is the idempotency key, derived from the permit and the action.
-2. **Four trace lines — two attempts, two commits:**
+2. **Four trace lines — two attempts, one commit, one replay:**
 
    ```
    mutation_attempted  owner=executor  resource=pay_ord_019  version=1  reason=-
    mutation_committed  owner=executor  resource=pay_ord_019  version=2  reason=-
    mutation_attempted  owner=executor  resource=pay_ord_019  version=2  reason=-
-   mutation_committed  owner=executor  resource=pay_ord_019  version=2  reason=idempotent_replay
+   mutation_replayed   owner=executor  resource=pay_ord_019  version=2  reason=idempotent_replay
    ```
 
-   Say: *"The second commit is a replay. The version does not move the second time, and the
-   reason code says so."*
+   Say: *"The second attempt is a replay, and the trace says so in the event name. The
+   version does not move, and `mutation_committed` is only ever emitted for a write that
+   really happened."*
 3. **The ledger, which is the punchline:**
 
    ```
@@ -158,7 +159,7 @@ Point at:
    mutations committed (counted in mutation_log): 1
    ```
 
-   Say: *"Two commits in the trace, one row in the ledger, 9,000 cents refunded once. The
+   Say: *"One commit in the trace, one row in the ledger, 9,000 cents refunded once. The
    retry got the stored result of the first execution, not a second refund."*
 
 ---

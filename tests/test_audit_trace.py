@@ -145,13 +145,19 @@ def test_an_idempotent_replay_records_both_attempts():
         "mutation_attempted",
         "mutation_committed",
         "mutation_attempted",
-        "mutation_committed",
+        "mutation_replayed",
         "state_verified",
         "run_finished",
     ]
     committed = [e for e in audit.events if e["event_type"] == "mutation_committed"]
+    assert len(committed) == 1
     assert committed[0]["reason_code"] == ""
-    assert committed[1]["reason_code"] == "idempotent_replay"
+
+    replayed = [e for e in audit.events if e["event_type"] == "mutation_replayed"]
+    assert len(replayed) == 1
+    assert replayed[0]["reason_code"] == "idempotent_replay"
+    assert replayed[0]["created_id"].startswith("ref_")
+    assert replayed[0]["permit_id"] == committed[0]["permit_id"]
     assert report.mutation_count == 1
 
 

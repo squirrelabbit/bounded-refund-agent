@@ -94,7 +94,13 @@ class Executor:
                 assert permit is not None
                 raise ResponseTimeout(str(proposal.action), permit.idempotency_key)
         elif result.committed and result.replayed:
-            self._emit("mutation_committed", proposal, permit, result)
+            self._emit(
+                "mutation_replayed",
+                proposal,
+                permit,
+                result,
+                created_id=result.created_id or "",
+            )
         else:
             self._emit("mutation_rejected", proposal, permit, result)
         return result
@@ -280,6 +286,7 @@ class Executor:
         proposal: ActionProposal,
         permit: ExecutionPermit | None,
         result: ExecutionResult | None,
+        **extra: Any,
     ) -> None:
         if self.audit is None:
             return
@@ -291,6 +298,7 @@ class Executor:
             decision_owner=DecisionOwner.EXECUTOR,
             reason_code=result.reason_code if result and result.reason_code else "",
             permit_id=permit.permit_id if permit else "",
+            **extra,
         )
 
 

@@ -3,6 +3,12 @@
 Every event answers the same question: who decided this, about which resource,
 at which version, and why. Reading the trace top to bottom should make the whole
 run reconstructible without reading the code.
+
+``mutation_committed`` is emitted only when a new mutation was actually written,
+so the number of those events in a trace equals the number of ``mutation_log``
+rows for that run. A retry that is answered out of the execution record emits
+``mutation_replayed`` with ``reason_code: idempotent_replay`` instead; it changes
+nothing.
 """
 
 from __future__ import annotations
@@ -23,6 +29,7 @@ EVENT_ORDER = (
     "permit_issued",
     "mutation_attempted",
     "mutation_committed",
+    "mutation_replayed",
     "mutation_rejected",
     "state_verified",
     "run_finished",
