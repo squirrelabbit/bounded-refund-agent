@@ -84,6 +84,44 @@ a permit that was consumed with no execution record behind it.
 Consequence to keep in mind when reading the oracle: deliberately replaying a spent permit
 is expected to leave the mutation count unchanged, not to raise `permit_already_used`.
 
+## 3b. How escalation reads the order
+
+`Runner._escalate()` reads the order with `db.fetch_order()` instead of going through
+`get_order`, the read tool the agent uses. That is deliberate, not an oversight.
+
+The ticket is a write against a real order row, so the write has to reference an order
+that exists; a foreign key is not satisfied by a plausible id. And escalation is frequently
+triggered *by* a failure in the agent-facing read path — `insufficient_information` means
+`get_order` or one of its siblings gave up after `READ_MAX_ATTEMPTS`. Routing the
+escalation's own read back through the path that just failed would mean the system cannot
+ask for help precisely when it most needs to.
+
+The general rule this follows: the server's own data access and the tools exposed to the
+agent are different paths with different trust. The agent's tools are the surface the
+policy and permit boundary defend. The server reading its own tables to satisfy a
+constraint on a write it already authorised is not that surface, and it grants the agent
+nothing — no proposal can reach `db.fetch_order()`.
+
+## 3c. Escalation with no order row: a known gap
+
+Escalation writes a ticket against the order. If the order row itself does not exist —
+an unknown id, or a world seeded without it — there is nothing to attach the ticket to.
+The run ends `escalated` with a mutation count of 0, and the only trace of the handover is
+a line in `notes`:
+
+```
+escalated without a ticket: order <id> is unreadable
+```
+
+This is fail-closed on the money: nothing is written, nothing is refunded. It is **not**
+fail-closed on the handover. The system has decided a human should look at this and has
+then produced nothing a human will ever see. No queue entry, no alert; the signal lives in
+a run report that nobody is subscribed to.
+
+This limitation is stated rather than fixed. A fix means a new outcome or an alerting path,
+both outside the current scope, so the idea sits in `docs/FUTURE_WORK.md`. It is repeated
+in the README's limitations so a reader does not have to find it here.
+
 ## 4. Oracle schema
 
 `evals/truth_manifest.json` is read by the evaluator only; the agent runtime never sees it.

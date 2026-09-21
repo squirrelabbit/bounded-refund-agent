@@ -8,3 +8,4 @@ One line per idea. Not implemented, not planned into the current scope.
 - Adversarial proposal generation instead of hand-written malicious proposals.
 - A second provider adapter to compare live planners under the same policy boundary.
 - Property-based tests over the order state machine.
+- A distinct outcome or alert for an escalation that could not write a ticket, so a handover to a human is never silent (DESIGN.md §3c).
